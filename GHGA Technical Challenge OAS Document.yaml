@@ -1,0 +1,203 @@
+openapi: 3.1.0
+
+info: 
+    title: Covid Test Portal REST API
+    description: This API provides access to medical professionals to upload and track COVID test samples for their patients.
+    version: 1.0.0
+servers:
+  - url: https://www.byronhimes.com/portal
+
+paths: 
+  /sample/{access_token}:
+    get:
+      description: Get information about a test sample.
+      parameters:
+        - in: path
+          name: access_token
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          
+      responses:
+        '200':
+          description: Indicates request was successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patient_pseudonym:
+                    type: string
+                  submitter_email:
+                    type: string
+                  collection_date:
+                    type: string
+                  status: 
+                    type: string
+                  test_result:
+                    type: string
+                  test_date:
+                    type: string
+        
+        '400':
+          description: Invalid parameter supplied
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/message"
+                
+        '404':
+          description: Valid request, but record not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/message"
+        
+        '500':
+          description: Internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/message"
+
+  /sample:
+    post:
+      description: Upload a new test sample.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: 
+                - patient_pseudonym
+                - submitter_email
+                - collection_date
+              properties:
+                patient_pseudonym:
+                  $ref: "#/components/schemas/patient_pseudonym"
+                  # include constraints here 
+                submitter_email:
+                  $ref: "#/components/schemas/submitter_email"
+                collection_date:
+                  $ref: "#/components/schemas/collection_date"
+                    
+      responses:
+        '201':
+          description: Sample successully added to database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  sample_id:
+                    type: int
+                    
+        '400':
+          description: Invalid parameter supplied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/message"
+                
+        '500':
+          description: Internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/message"
+                
+    patch:
+      description: Update an existing sample with a test result.
+      requestBody:
+        required: true
+        content: 
+          application/json:
+            schema:
+              type: object
+              required:
+                - access_token
+                - status
+              properties:
+                access_token:
+                  type: string
+                status:
+                  $ref: "#/components/schemas/status"
+                test_result:
+                  $ref: "#/components/schemas/test_result"
+                test_date:
+                  $ref: "#/components/schemas/test_date"
+                    
+      responses:
+        '200':  
+          description: Successfully processed request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/message"
+                
+        '400':
+          description: Invalid parameter supplied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/message"
+                
+        '404':
+          description: Record of sample not found, could not update
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/message"
+                
+        '500':
+          description: Internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/message"
+          
+                 
+components:
+  schemas:
+    message:
+      type: object
+      properties:
+        msg: 
+          type: string
+    patient_pseudonym:
+      type: string
+      minLength: 11
+      maxLength: 63
+      examples:
+        - Bob Ross
+    submitter_email:
+      type: string # is there an email type?
+      format: email
+      examples:
+        - example@example.com
+    collection_date:
+      type: string
+      format: date-time
+      examples:
+        - "2021-01-30T08:30:00Z"
+    test_date:
+      type: string
+      format: date-time
+      examples:
+        - "2021-01-30T08:30:00Z"
+    test_result:
+      type: string
+      enum:
+        - positive
+        - negative
+    status:
+      type: string
+      enum:
+        - completed
+        - failed
+                
